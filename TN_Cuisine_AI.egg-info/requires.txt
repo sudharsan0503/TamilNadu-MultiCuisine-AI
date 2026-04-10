@@ -1,0 +1,9 @@
+pandas
+numpy
+scikit-learn
+flask
+torch
+torchvision
+transformers
+dill
+beautifulsoup4

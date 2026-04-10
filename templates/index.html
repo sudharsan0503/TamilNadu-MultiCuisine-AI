@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TNMC-5000 | Multi-Cuisine AI</title>
+    <!-- Google Fonts for Modern look -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&family=Playfair+Display:ital,wght@0,600;1,700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <!-- Phosphor Icons for elegant UI elements -->
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+</head>
+<body>
+    <div class="blob-bg"></div>
+    <div class="blob-bg blob-2"></div>
+    
+    <div class="container">
+        <header>
+            <div class="logo">
+                <i class="ph ph-bowl-food"></i>
+                <span>TNMC-5000</span>
+            </div>
+            <p class="subtitle">Tamil Nadu Multi-Cuisine AI Model</p>
+        </header>
+
+        <main class="glass-panel">
+            <div class="form-section">
+                <h1>Discover the True Taste of Tamil Nadu</h1>
+                <p class="description">Upload an image of a dish and its core ingredients to let our Multimodal ViT predictor identify its Chettinad, Kongunadu, or Madurai roots.</p>
+
+                <form id="predictionForm" enctype="multipart/form-data">
+                    <div class="input-group">
+                        <label for="dish_image"><i class="ph ph-image"></i> Upload Dish Image</label>
+                        <div class="file-upload">
+                            <input type="file" name="dish_image" id="dish_image" accept="image/*">
+                            <div class="file-dummy">
+                                <i class="ph ph-upload-simple"></i>
+                                <span>Drag and drop or click to browse</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="input-group">
+                        <label for="recipe_text"><i class="ph ph-text-aa"></i> Recipe or Ingredients</label>
+                        <textarea name="recipe_text" id="recipe_text" placeholder="e.g. Star anise, kalpasi, chicken, dry red chillies..."></textarea>
+                    </div>
+
+                    <button type="submit" class="glow-btn" id="submitBtn">
+                        <span id="btnText">Predict Cuisine</span>
+                        <i id="btnIcon" class="ph ph-sparkle"></i>
+                        <div class="loader" id="loader" style="display: none;"></div>
+                    </button>
+                </form>
+            </div>
+
+            <!-- Dynamic Result Container -->
+            <div id="resultContainer" class="result-section" style="display: none;">
+                <div class="result-card" id="resultCard">
+                    <div class="icon-wrapper" id="resultIconWrapper">
+                        <i id="resultIcon" class="ph-fill ph-check-circle"></i>
+                    </div>
+                    <h2 id="resultTitle">Prediction Complete</h2>
+                    <p class="predicted-text" id="resultMessage">Identified as: <span class="highlight" id="resultPredict"></span></p>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <script>
+        const fileInput = document.getElementById('dish_image');
+        const fileDummy = document.querySelector('.file-dummy');
+        const fileSpan = fileDummy.querySelector('span');
+        const fileIcon = fileDummy.querySelector('i');
+
+        // Handle file selection via click
+        fileInput.addEventListener('change', function(e) {
+            handleFileName(e.target.files);
+        });
+
+        // Handle Drag and Drop visuals
+        fileInput.addEventListener('dragenter', () => {
+            fileDummy.style.borderColor = 'var(--primary-red)';
+            fileDummy.style.background = 'rgba(217, 56, 30, 0.1)';
+        });
+
+        fileInput.addEventListener('dragleave', () => {
+            fileDummy.style.borderColor = 'rgba(255, 255, 255, 0.2)';
+            fileDummy.style.background = 'rgba(0,0,0,0.2)';
+        });
+
+        fileInput.addEventListener('drop', (e) => {
+            fileDummy.style.borderColor = 'rgba(255, 255, 255, 0.2)';
+            fileDummy.style.background = 'rgba(0,0,0,0.2)';
+            if (e.dataTransfer.files.length) {
+                fileInput.files = e.dataTransfer.files;
+                handleFileName(e.dataTransfer.files);
+            }
+        });
+
+        function handleFileName(files) {
+            if(files && files.length > 0) {
+                const fileName = files[0].name;
+                fileSpan.textContent = "Selected: " + fileName;
+                fileSpan.style.color = "var(--text-main)";
+                fileIcon.className = "ph-fill ph-check-circle";
+                fileIcon.style.color = "var(--accent-gold)";
+            }
+        }
+
+        // Handle Form Submission Interactively
+        const form = document.getElementById('predictionForm');
+        const submitBtn = document.getElementById('submitBtn');
+        const btnText = document.getElementById('btnText');
+        const btnIcon = document.getElementById('btnIcon');
+        const loader = document.getElementById('loader');
+        
+        const resultContainer = document.getElementById('resultContainer');
+        const resultCard = document.getElementById('resultCard');
+        const resultTitle = document.getElementById('resultTitle');
+        const resultMessage = document.getElementById('resultMessage');
+        const resultIconWrapper = document.getElementById('resultIconWrapper');
+        const resultIcon = document.getElementById('resultIcon');
+        const resultPredict = document.getElementById('resultPredict');
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault(); // Stop Page Reload
+            
+            // UI Loading State
+            btnText.textContent = "Analyzing PyTorch Tensors...";
+            btnIcon.style.display = "none";
+            loader.style.display = "block";
+            submitBtn.style.pointerEvents = "none";
+            resultContainer.style.display = "none";
+
+            const formData = new FormData(form);
+
+            try {
+                // Wait slightly for UI polish feeling
+                await new Promise(r => setTimeout(r, 600));
+
+                const response = await fetch('/predict', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const data = await response.json();
+                
+                resultContainer.style.display = "block";
+                resultContainer.classList.add('show');
+                
+                if (data.success) {
+                    resultTitle.textContent = "Prediction Complete";
+                    resultMessage.innerHTML = 'Identified as: <span class="highlight">' + data.prediction + '</span>';
+                    resultIconWrapper.className = "icon-wrapper";
+                    resultIcon.className = "ph-fill ph-check-circle";
+                } else {
+                    resultTitle.textContent = "Error Occurred";
+                    resultMessage.textContent = data.error;
+                    resultIconWrapper.className = "icon-wrapper error-icon";
+                    resultIcon.className = "ph-fill ph-warning-circle";
+                }
+            } catch (error) {
+                resultContainer.style.display = "block";
+                resultContainer.classList.add('show');
+                resultTitle.textContent = "Network Error";
+                resultMessage.textContent = "Unable to connect to PyTorch API.";
+                resultIconWrapper.className = "icon-wrapper error-icon";
+                resultIcon.className = "ph-fill ph-warning-circle";
+            } finally {
+                // UI Reset State
+                btnText.textContent = "Predict Cuisine";
+                btnIcon.style.display = "inline-block";
+                loader.style.display = "none";
+                submitBtn.style.pointerEvents = "auto";
+            }
+        });
+    </script>
+</body>
+</html>

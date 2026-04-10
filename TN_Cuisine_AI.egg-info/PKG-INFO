@@ -1,0 +1,17 @@
+Metadata-Version: 2.4
+Name: TN_Cuisine_AI
+Version: 0.0.1
+Author: Sudha
+Author-email: sudha@example.com
+Requires-Dist: pandas
+Requires-Dist: numpy
+Requires-Dist: scikit-learn
+Requires-Dist: flask
+Requires-Dist: torch
+Requires-Dist: torchvision
+Requires-Dist: transformers
+Requires-Dist: dill
+Requires-Dist: beautifulsoup4
+Dynamic: author
+Dynamic: author-email
+Dynamic: requires-dist
