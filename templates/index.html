@@ -62,7 +62,27 @@
                         <i id="resultIcon" class="ph-fill ph-check-circle"></i>
                     </div>
                     <h2 id="resultTitle">Prediction Complete</h2>
-                    <p class="predicted-text" id="resultMessage">Identified as: <span class="highlight" id="resultPredict"></span></p>
+                    <div id="resultDetails" style="display:none; text-align: left; margin-top: 1.5rem;">
+                        <p class="predicted-text" style="font-size: 1rem; color: var(--text-muted);">Dish Match</p>
+                        <p class="highlight" id="resultPredictName" style="margin-top: 0.2rem; font-size: 1.8rem;"></p>
+                        
+                        <div style="display: flex; gap: 1rem; margin-top: 1rem; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 1rem;">
+                            <div style="flex: 1;">
+                                <span style="font-size: 0.85rem; color: var(--accent-gold); text-transform: uppercase;">Origin Region</span>
+                                <p id="resultPredictRegion" style="font-weight: 600; margin-top: 0.2rem;"></p>
+                            </div>
+                            <div style="flex: 1;">
+                                <span style="font-size: 0.85rem; color: var(--accent-gold); text-transform: uppercase;">Confidence</span>
+                                <p id="resultPredictProb" style="font-weight: 600; margin-top: 0.2rem;"></p>
+                            </div>
+                        </div>
+
+                        <div style="margin-top: 1rem;">
+                            <span style="font-size: 0.85rem; color: var(--accent-gold); text-transform: uppercase;">About this Dish</span>
+                            <p id="resultPredictDesc" style="color: var(--text-main); font-size: 0.95rem; line-height: 1.5; margin-top: 0.3rem;"></p>
+                        </div>
+                    </div>
+                    <p class="predicted-text" id="resultMessage" style="display:none"></p>
                 </div>
             </div>
 
@@ -118,12 +138,17 @@
         const loader = document.getElementById('loader');
         
         const resultContainer = document.getElementById('resultContainer');
-        const resultCard = document.getElementById('resultCard');
         const resultTitle = document.getElementById('resultTitle');
         const resultMessage = document.getElementById('resultMessage');
+        const resultDetails = document.getElementById('resultDetails');
         const resultIconWrapper = document.getElementById('resultIconWrapper');
         const resultIcon = document.getElementById('resultIcon');
-        const resultPredict = document.getElementById('resultPredict');
+
+        // Result Data Pointers
+        const rName = document.getElementById('resultPredictName');
+        const rRegion = document.getElementById('resultPredictRegion');
+        const rProb = document.getElementById('resultPredictProb');
+        const rDesc = document.getElementById('resultPredictDesc');
 
         form.addEventListener('submit', async (e) => {
             e.preventDefault(); // Stop Page Reload
@@ -134,6 +159,8 @@
             loader.style.display = "block";
             submitBtn.style.pointerEvents = "none";
             resultContainer.style.display = "none";
+            resultDetails.style.display = "none";
+            resultMessage.style.display = "none";
 
             const formData = new FormData(form);
 
@@ -152,13 +179,22 @@
                 resultContainer.classList.add('show');
                 
                 if (data.success) {
-                    resultTitle.textContent = "Prediction Complete";
-                    resultMessage.innerHTML = 'Identified as: <span class="highlight">' + data.prediction + '</span>';
+                    resultTitle.textContent = "Multimodal Analysis Complete";
+                    
+                    // Populate Rich Details
+                    rName.textContent = data.prediction.name;
+                    rRegion.textContent = data.prediction.region;
+                    rProb.textContent = data.prediction.probability + "%";
+                    rDesc.textContent = data.prediction.description;
+                    
+                    resultDetails.style.display = "block";
+                    
                     resultIconWrapper.className = "icon-wrapper";
                     resultIcon.className = "ph-fill ph-check-circle";
                 } else {
                     resultTitle.textContent = "Error Occurred";
                     resultMessage.textContent = data.error;
+                    resultMessage.style.display = "block";
                     resultIconWrapper.className = "icon-wrapper error-icon";
                     resultIcon.className = "ph-fill ph-warning-circle";
                 }
@@ -166,7 +202,8 @@
                 resultContainer.style.display = "block";
                 resultContainer.classList.add('show');
                 resultTitle.textContent = "Network Error";
-                resultMessage.textContent = "Unable to connect to PyTorch API.";
+                resultMessage.textContent = "Unable to connect to API.";
+                resultMessage.style.display = "block";
                 resultIconWrapper.className = "icon-wrapper error-icon";
                 resultIcon.className = "ph-fill ph-warning-circle";
             } finally {
